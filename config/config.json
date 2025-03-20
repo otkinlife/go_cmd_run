@@ -1,0 +1,18 @@
+{
+  "cd": {
+    "path": "text"
+  },
+  "ls": {
+    "path": "text"
+  },
+  "ole_spider": {
+    "token[-t]": "text",
+    "id[-i]": "text",
+    "start[-s]": "int",
+    "end[-e]": "int"
+  },
+  "grep": {
+    "content[-r]": "text",
+    "pattern": "text"
+  }
+}
