@@ -27,6 +27,8 @@ FROM alpine:latest
 
 WORKDIR /app
 
+ENV PATH="${PATH}:/app/scripts"
+
 # Copy the binary from builder
 COPY --from=builder /app/go_cmd_run .
 
