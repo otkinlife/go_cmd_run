@@ -38,7 +38,6 @@ func main() {
 
 	// 设置路由
 	http.HandleFunc("/api/commands", getCommandsHandler)
-	//http.HandleFunc("/api/execute", executeCommandHandler)
 	http.HandleFunc("/ws/execute", wsExecuteCommandHandler)
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
@@ -105,90 +104,6 @@ func getCommandsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HTTP 执行命令处理器
-func executeCommandHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	// 解析请求
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "Failed to parse form", http.StatusBadRequest)
-		return
-	}
-
-	cmdName := r.FormValue("cmd")
-	if cmdName == "" {
-		http.Error(w, "Command name is required", http.StatusBadRequest)
-		return
-	}
-
-	// 检查命令是否存在于配置中
-	cmdArgs, exists := cmdConfig[cmdName]
-	if !exists {
-		http.Error(w, "Command not found", http.StatusBadRequest)
-		return
-	}
-
-	// 构建命令参数
-	args := []string{}
-	for argName, argType := range cmdArgs {
-		// 检查参数名是否包含[-x]格式
-		if matches := regexp.MustCompile(`\[(.*)\]$`).FindStringSubmatch(argName); matches != nil {
-			// 这是命令行格式的参数，如[-i]
-			flagName := matches[1] // 提取-i部分
-			argValue := r.FormValue(argName)
-			if argValue == "" {
-				http.Error(w, fmt.Sprintf("Missing argument: %s", flagName), http.StatusBadRequest)
-				return
-			}
-
-			// 验证参数类型
-			if argType == "int" {
-				if _, err := strconv.Atoi(argValue); err != nil {
-					http.Error(w, fmt.Sprintf("Argument %s must be an integer", flagName), http.StatusBadRequest)
-					return
-				}
-			}
-
-			args = append(args, flagName) // 添加参数名（如-i）
-			args = append(args, argValue) // 添加参数值
-		} else {
-			// 普通参数处理
-			argValue := r.FormValue(argName)
-			if argValue == "" {
-				http.Error(w, fmt.Sprintf("Missing argument: %s", argName), http.StatusBadRequest)
-				return
-			}
-
-			// 验证参数类型
-			if argType == "int" {
-				if _, err := strconv.Atoi(argValue); err != nil {
-					http.Error(w, fmt.Sprintf("Argument %s must be an integer", argName), http.StatusBadRequest)
-					return
-				}
-			}
-
-			args = append(args, argValue)
-		}
-	}
-	// 执行命令
-	cmd := exec.Command(cmdName, args...)
-
-	// 设置命令输出到HTTP响应
-	cmd.Stdout = w
-	cmd.Stderr = w
-
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(w, "Error executing command: %v", err)
-	}
-}
-
 // WebSocket 执行命令处理器 - 用于实时输出
 func wsExecuteCommandHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -220,6 +135,9 @@ func wsExecuteCommandHandler(w http.ResponseWriter, r *http.Request) {
 	// 构建命令参数
 	args := []string{}
 	for argName, argType := range cmdArgs {
+		if argValue, exists := request.Args[argName]; !exists || argValue == "" {
+			continue
+		}
 		// 检查参数名是否包含[-x]格式
 		if matches := regexp.MustCompile(`\[(.*)\]$`).FindStringSubmatch(argName); matches != nil {
 			// 这是命令行格式的参数，如[-i]
