@@ -1,6 +1,10 @@
 # Build stage
 FROM golang:latest AS builder
 
+ENV HTTP_PROXY=http://clash:7890
+ENV HTTPS_PROXY=http://clash:7890
+ENV NO_PROXY=localhost,127.0.0.1
+
 WORKDIR /app
 
 # Copy go mod files first to leverage Docker cache
