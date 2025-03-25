@@ -48,7 +48,7 @@ func main() {
 
 // 加载配置文件
 func loadConfig() {
-	configPath := os.Getenv("CONFIG_PATH")
+	configPath := os.Getenv("CMD_CONFIG_PATH")
 	if configPath == "" {
 		configPath = "./config/config.json" // 默认配置路径
 	}
