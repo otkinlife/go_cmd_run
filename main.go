@@ -42,8 +42,8 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
 	// 启动服务器
-	log.Println("Server started at http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("Server started at http://localhost:9567")
+	log.Fatal(http.ListenAndServe(":9567", nil))
 }
 
 // 加载配置文件
